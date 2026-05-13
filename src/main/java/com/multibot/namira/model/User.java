@@ -12,11 +12,6 @@ public class User {
 
     private String username;
     private String email;
-    private String discordId; // Το μοναδικό ID που δίνει το Discord στον χρήστη
-
-    // Μην ξεχάσεις Getter και Setter (Alt+Insert)
-    public String getDiscordId() { return discordId; }
-    public void setDiscordId(String discordId) { this.discordId = discordId; }
 
     // Default Constructor (Απαραίτητος για τη βάση)
     public User() {}
