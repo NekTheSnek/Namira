@@ -3,7 +3,7 @@ package com.multibot.namira.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users") // Το όνομα που ζήτησες
+@Table(name = "users")
 public class User {
 
     @Id
@@ -13,10 +13,10 @@ public class User {
     private String username;
     private String email;
 
-    // Default Constructor (Απαραίτητος για τη βάση)
+    // Default Constructor
     public User() {}
 
-    // Constructor για ευκολία
+    // Constructor
     public User(String username, String email) {
         this.username = username;
         this.email = email;
