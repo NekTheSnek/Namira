@@ -26,6 +26,8 @@ public class NamiraApplication {
             // Καταχώρηση των εντολών
             jda.upsertCommand("register", "Εγγραφή στη βάση / Register to database").queue();
             jda.upsertCommand("set_language", "Αλλαγή γλώσσας / Change language").queue();
+            // Μέσα στη main
+            jda.upsertCommand("setup_welcome", "Admin only: Spawns the welcome message").queue();
 
             System.out.println("Namira Bot is Online!");
         }

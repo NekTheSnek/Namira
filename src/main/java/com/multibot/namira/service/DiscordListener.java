@@ -21,6 +21,25 @@ public class DiscordListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String command = event.getName();
+        if (command.equals("setup_welcome")) {
+            // Έλεγχος αν είσαι εσύ ο Admin (προαιρετικό αλλά καλό)
+            EmbedBuilder welcome = new EmbedBuilder()
+                    .setTitle("Welcome to Namira! / Καλώς ήρθατε!")
+                    .setDescription("Please select your language to unlock the rest of the server.\n" +
+                            "Παρακαλώ επιλέξτε γλώσσα για να ξεκλειδώσετε τον server.")
+                    .setColor(Color.MAGENTA);
+
+            // Το Bot στέλνει το μήνυμα ΜΟΝΙΜΑ στο κανάλι
+            event.getChannel().sendMessageEmbeds(welcome.build())
+                    .addActionRow(
+                            Button.primary("lang-el", "Ελληνικά 🇬🇷"),
+                            Button.secondary("lang-en", "English 🇺🇸"),
+                            Button.danger("lang-fr", "Français 🇫🇷")
+                    )
+                    .queue();
+
+            event.reply("Welcome message spawned!").setEphemeral(true).queue();
+        }
 
         if (command.equals("set_language")) {
             // Όμορφο Embed για την επιλογή γλώσσας
