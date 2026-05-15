@@ -12,14 +12,16 @@ public class User {
 
     private String username;
     private String email;
+    private String discordId; // Το νέο πεδίο
 
-    // Default Constructor
+    // Default Constructor (Απαραίτητος για το Hibernate)
     public User() {}
 
-    // Constructor
-    public User(String username, String email) {
+    // Constructor για γρήγορη δημιουργία
+    public User(String username, String email, String discordId) {
         this.username = username;
         this.email = email;
+        this.discordId = discordId;
     }
 
     // --- Getters & Setters ---
@@ -31,4 +33,7 @@ public class User {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getDiscordId() { return discordId; }
+    public void setDiscordId(String discordId) { this.discordId = discordId; }
 }
