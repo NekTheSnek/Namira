@@ -24,15 +24,15 @@ public class NamiraApplication {
                     .addEventListeners(listener)
                     .build();
 
-            // Δήλωση της εντολής με μεταφράσεις στο μενού του Discord
-            jda.upsertCommand("register", "Register to our database")
+            // Καταχώρηση της εντολής με Localization για το UI του Discord
+            jda.upsertCommand("register", "Register to Namira database")
                     .setNameLocalization(DiscordLocale.GREEK, "εγγραφή")
                     .setDescriptionLocalization(DiscordLocale.GREEK, "Κάνε εγγραφή στη βάση δεδομένων της Namira")
                     .setNameLocalization(DiscordLocale.FRENCH, "s-inscrire")
-                    .setDescriptionLocalization(DiscordLocale.FRENCH, "Inscrivez-vous à la base de données Namira")
+                    .setDescriptionLocalization(DiscordLocale.FRENCH, "S'inscrire στην βάση της Namira")
                     .queue();
 
-            System.out.println("Namira Bot is Online with Multilingual Slash Commands!");
+            System.out.println("Namira is live and multilingual!");
         }
     }
 }
