@@ -2,12 +2,15 @@ package com.multibot.namira.service;
 
 import com.multibot.namira.model.User;
 import com.multibot.namira.repository.UserRepository;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.awt.Color;
 
 @Service
 public class DiscordListener extends ListenerAdapter {
@@ -20,15 +23,21 @@ public class DiscordListener extends ListenerAdapter {
         String command = event.getName();
 
         if (command.equals("set_language")) {
-            StringSelectMenu menu = StringSelectMenu.create("choose-lang")
-                    .addOption("Ελληνικά 🇬🇷", "el")
-                    .addOption("English 🇺🇸", "en")
-                    .addOption("Français 🇫🇷", "fr")
-                    .setPlaceholder("Επιλέξτε γλώσσα / Choose language")
-                    .build();
+            // Όμορφο Embed για την επιλογή γλώσσας
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("🌐 Language Selection / Επιλογή Γλώσσας")
+                    .setDescription("Please select your preferred language for Namira Bot below.\n" +
+                            "Επιλέξτε την γλώσσα προτίμησής σας για το Namira Bot παρακάτω.")
+                    .setColor(new Color(114, 137, 218)) // Discord Blue
+                    .setThumbnail(event.getJDA().getSelfUser().getEffectiveAvatarUrl());
 
-            event.reply("Choose your preferred language for Namira Bot:")
-                    .addActionRow(menu)
+            // 3 Όμορφα Κουμπιά με Σημαίες
+            event.replyEmbeds(embed.build())
+                    .addActionRow(
+                            Button.primary("lang-el", "Ελληνικά 🇬🇷"),
+                            Button.secondary("lang-en", "English 🇺🇸"),
+                            Button.danger("lang-fr", "Français 🇫🇷")
+                    )
                     .setEphemeral(true)
                     .queue();
 
@@ -36,38 +45,44 @@ public class DiscordListener extends ListenerAdapter {
             String discordId = event.getUser().getId();
             String name = event.getUser().getName();
 
-            // Ψάχνουμε αν υπάρχει ο χρήστης
             User user = userRepository.findByDiscordId(discordId).orElse(null);
-            String lang = "en"; // Default αν δεν υπάρχει
+            String lang = "en";
 
             if (user == null) {
-                // Αν δεν υπάρχει, τον φτιάχνουμε με default 'en'
                 user = new User(name, name + "@discord.com", discordId);
                 userRepository.save(user);
             } else {
-                // Αν υπάρχει, παίρνουμε τη γλώσσα του
                 lang = user.getPreferredLanguage();
             }
 
-            // Απάντηση βάσει της γλώσσας
-            String response = switch (lang) {
-                case "el" -> "Εγγραφή επιτυχής! Γεια σου " + name + "!";
-                case "fr" -> "Inscription réussie ! Bonjour " + name + " !";
-                default -> "Registration successful! Hello " + name + "!";
-            };
+            // Φτιάχνουμε ένα πανέμορφο Embed για την επιτυχία
+            EmbedBuilder successEmbed = new EmbedBuilder()
+                    .setThumbnail(event.getUser().getEffectiveAvatarUrl())
+                    .setColor(Color.GREEN);
 
-            event.reply(response).setEphemeral(true).queue();
+            switch (lang) {
+                case "el" -> successEmbed.setTitle("✅ Η εγγραφή ολοκληρώθηκε!")
+                        .setDescription("Γεια σου **" + name + "**!\nΚαλώς όρισες στο σύστημα της Namira. Τα στοιχεία σου αποθηκεύτηκαν με ασφάλεια.");
+                case "fr" -> successEmbed.setTitle("✅ Inscription Réussie!")
+                        .setDescription("Bonjour **" + name + "**!\nBienvenue sur Namira. Vos données ont été enregistrées avec succès.");
+                default -> successEmbed.setTitle("✅ Registration Successful!")
+                        .setDescription("Hello **" + name + "**!\nWelcome to Namira system. Your details have been securely saved.");
+            }
+
+            event.replyEmbeds(successEmbed.build()).setEphemeral(true).queue();
         }
     }
 
     @Override
-    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
-        if (event.getComponentId().equals("choose-lang")) {
-            String selectedLang = event.getValues().get(0);
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        String buttonId = event.getComponentId();
+
+        if (buttonId.startsWith("lang-")) {
+            String selectedLang = buttonId.substring(5); // Παίρνει το "el", "en" ή "fr"
             String discordId = event.getUser().getId();
             String name = event.getUser().getName();
 
-            // Ενημερώνουμε τη γλώσσα στη βάση με ασφάλεια
+            // Αποθήκευση στη βάση
             userRepository.findByDiscordId(discordId).ifPresentOrElse(user -> {
                 user.setPreferredLanguage(selectedLang);
                 userRepository.save(user);
@@ -77,13 +92,17 @@ public class DiscordListener extends ListenerAdapter {
                 userRepository.save(newUser);
             });
 
-            String msg = switch (selectedLang) {
-                case "el" -> "Η γλώσσα άλλαξε σε Ελληνικά!";
-                case "fr" -> "La langue a été changée en Français !";
-                default -> "Language changed to English!";
-            };
+            // Μήνυμα επιβεβαίωσης σε Embed
+            EmbedBuilder replyEmbed = new EmbedBuilder().setColor(Color.CYAN);
 
-            event.reply(msg).setEphemeral(true).queue();
+            switch (selectedLang) {
+                case "el" -> replyEmbed.setDescription("✨ Η γλώσσα άλλαξε επιτυχώς σε **Ελληνικά**!");
+                case "fr" -> replyEmbed.setDescription("✨ La langue α été changée en **Français** !");
+                default -> replyEmbed.setDescription("✨ Language successfully changed to **English**!");
+            }
+
+            // Κάνουμε edit το αρχικό μήνυμα για να εξαφανιστούν τα κουμπιά αφού επιλέξει
+            event.editMessageEmbeds(replyEmbed.build()).setComponents().queue();
         }
     }
 }
