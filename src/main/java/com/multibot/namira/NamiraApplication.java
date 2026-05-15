@@ -10,19 +10,24 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
 public class NamiraApplication {
+
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(NamiraApplication.class, args);
+
         String token = context.getEnvironment().getProperty("BOT_TOKEN");
         DiscordListener listener = context.getBean(DiscordListener.class);
 
-        if (token != null) {
+        if (token != null && !token.isEmpty()) {
             JDA jda = JDABuilder.createDefault(token)
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                     .addEventListeners(listener)
                     .build();
 
-            jda.upsertCommand("register", "Εγγραφή στη βάση / Register").queue();
+            // Εγγραφή των δύο εντολών
+            jda.upsertCommand("register", "Εγγραφή στη βάση / Register to database").queue();
             jda.upsertCommand("set_language", "Αλλαγή γλώσσας / Change language").queue();
+
+            System.out.println("Namira Bot is Online!");
         }
     }
 }

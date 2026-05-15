@@ -17,7 +17,9 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (event.getName().equals("set_language")) {
+        String command = event.getName();
+
+        if (command.equals("set_language")) {
             StringSelectMenu menu = StringSelectMenu.create("choose-lang")
                     .addOption("Ελληνικά 🇬🇷", "el")
                     .addOption("English 🇺🇸", "en")
@@ -29,27 +31,26 @@ public class DiscordListener extends ListenerAdapter {
                     .addActionRow(menu)
                     .setEphemeral(true)
                     .queue();
-        } else if (event.getName().equals("register")) {
-            handleRegister(event);
+
+        } else if (command.equals("register")) {
+            String discordId = event.getUser().getId();
+            // Ψάχνουμε αν υπάρχει ο χρήστης
+            User user = userRepository.findByDiscordId(discordId).orElse(null);
+
+            if (user == null) {
+                user = new User(event.getUser().getName(), event.getUser().getName() + "@discord.com", discordId);
+                userRepository.save(user);
+            }
+
+            // Απάντηση βάσει της γλώσσας που έχει στη βάση
+            String lang = user.getPreferredLanguage();
+            String response = switch (lang) {
+                case "el" -> "Εγγραφή επιτυχής! Γεια σου " + user.getUsername() + "!";
+                case "fr" -> "Inscription réussie ! Bonjour " + user.getUsername() + " !";
+                default -> "Registration successful! Hello " + user.getUsername() + "!";
+            };
+            event.reply(response).setEphemeral(true).queue();
         }
-    }
-
-    private void handleRegister(SlashCommandInteractionEvent event) {
-        String discordId = event.getUser().getId();
-        User user = userRepository.findByDiscordId(discordId).orElse(null);
-
-        if (user == null) {
-            user = new User(event.getUser().getName(), event.getUser().getName() + "@discord.com", discordId);
-            userRepository.save(user);
-        }
-
-        String lang = user.getPreferredLanguage();
-        String response = switch (lang) {
-            case "el" -> "Εγγραφή επιτυχής! Γεια σου " + user.getUsername() + "!";
-            case "fr" -> "Inscription réussie ! Bonjour " + user.getUsername() + " !";
-            default -> "Registration successful! Hello " + user.getUsername() + "!";
-        };
-        event.reply(response).setEphemeral(true).queue();
     }
 
     @Override
@@ -58,9 +59,15 @@ public class DiscordListener extends ListenerAdapter {
             String selectedLang = event.getValues().get(0);
             String discordId = event.getUser().getId();
 
-            userRepository.findByDiscordId(discordId).ifPresent(user -> {
+            // Ενημερώνουμε τη γλώσσα στη βάση
+            userRepository.findByDiscordId(discordId).ifPresentOrElse(user -> {
                 user.setPreferredLanguage(selectedLang);
                 userRepository.save(user);
+            }, () -> {
+                // Αν δεν έχει κάνει register ακόμα, τον φτιάχνουμε τώρα
+                User newUser = new User(event.getUser().getName(), event.getUser().getName() + "@discord.com", discordId);
+                newUser.setPreferredLanguage(selectedLang);
+                userRepository.save(newUser);
             });
 
             String msg = switch (selectedLang) {
