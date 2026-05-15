@@ -3,8 +3,9 @@ package com.multibot.namira.service;
 import com.multibot.namira.model.User;
 import com.multibot.namira.repository.UserRepository;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.DiscordLocale;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,40 +17,58 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (event.getName().equals("register")) {
-            DiscordLocale userLocale = event.getUserLocale();
-            String discordId = event.getUser().getId();
-            String name = event.getUser().getName();
+        if (event.getName().equals("set_language")) {
+            StringSelectMenu menu = StringSelectMenu.create("choose-lang")
+                    .addOption("Ελληνικά 🇬🇷", "el")
+                    .addOption("English 🇺🇸", "en")
+                    .addOption("Français 🇫🇷", "fr")
+                    .setPlaceholder("Επιλέξτε γλώσσα / Choose language")
+                    .build();
 
-            // Έλεγχος αν ο χρήστης υπάρχει ήδη στη βάση
-            boolean exists = userRepository.findAll().stream()
-                    .anyMatch(u -> discordId.equals(u.getDiscordId()));
-
-            String response;
-            if (!exists) {
-                // Αποθήκευση νέου χρήστη
-                userRepository.save(new User(name, name + "@discord.com", discordId));
-
-                response = getTranslation(userLocale,
-                        "Εγγραφή επιτυχής! Γεια σου " + name + "!",
-                        "Registration successful! Hello " + name + "!",
-                        "Inscription réussie ! Bonjour " + name + " !");
-            } else {
-                response = getTranslation(userLocale,
-                        "Είσαι ήδη εγγεγραμμένος στη Namira!",
-                        "You are already registered in Namira!",
-                        "Vous êtes déjà inscrit sur Namira !");
-            }
-
-            // Απάντηση μόνο στον χρήστη (Ephemeral)
-            event.reply(response).setEphemeral(true).queue();
+            event.reply("Choose your preferred language for Namira Bot:")
+                    .addActionRow(menu)
+                    .setEphemeral(true)
+                    .queue();
+        } else if (event.getName().equals("register")) {
+            handleRegister(event);
         }
     }
 
-    // Βοηθητική μέθοδος για τις 3 γλώσσες
-    private String getTranslation(DiscordLocale locale, String greek, String english, String french) {
-        if (locale == DiscordLocale.GREEK) return greek;
-        if (locale == DiscordLocale.FRENCH) return french;
-        return english; // Default στα Αγγλικά
+    private void handleRegister(SlashCommandInteractionEvent event) {
+        String discordId = event.getUser().getId();
+        User user = userRepository.findByDiscordId(discordId).orElse(null);
+
+        if (user == null) {
+            user = new User(event.getUser().getName(), event.getUser().getName() + "@discord.com", discordId);
+            userRepository.save(user);
+        }
+
+        String lang = user.getPreferredLanguage();
+        String response = switch (lang) {
+            case "el" -> "Εγγραφή επιτυχής! Γεια σου " + user.getUsername() + "!";
+            case "fr" -> "Inscription réussie ! Bonjour " + user.getUsername() + " !";
+            default -> "Registration successful! Hello " + user.getUsername() + "!";
+        };
+        event.reply(response).setEphemeral(true).queue();
+    }
+
+    @Override
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        if (event.getComponentId().equals("choose-lang")) {
+            String selectedLang = event.getValues().get(0);
+            String discordId = event.getUser().getId();
+
+            userRepository.findByDiscordId(discordId).ifPresent(user -> {
+                user.setPreferredLanguage(selectedLang);
+                userRepository.save(user);
+            });
+
+            String msg = switch (selectedLang) {
+                case "el" -> "Η γλώσσα άλλαξε σε Ελληνικά!";
+                case "fr" -> "La langue a été changée en Français !";
+                default -> "Language changed to English!";
+            };
+            event.reply(msg).setEphemeral(true).queue();
+        }
     }
 }
