@@ -23,7 +23,7 @@ public class NamiraApplication {
                     .addEventListeners(listener)
                     .build();
 
-            // Εγγραφή των δύο εντολών
+            // Καταχώρηση των εντολών
             jda.upsertCommand("register", "Εγγραφή στη βάση / Register to database").queue();
             jda.upsertCommand("set_language", "Αλλαγή γλώσσας / Change language").queue();
 
