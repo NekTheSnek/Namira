@@ -30,7 +30,7 @@ public class NamiraApplication {
             jda.awaitReady();
 
             // Ο Server σου
-            Guild guild = jda.getGuildById("1239855543144349787");
+            Guild guild = jda.getGuildById("11236995567645626428");
 
             if (guild != null) {
                 guild.updateCommands()
