@@ -3,7 +3,6 @@ package com.multibot.namira.service;
 import com.multibot.namira.model.User;
 import com.multibot.namira.model.Event; // <--- Σιγουρέψου ότι έχεις αυτό το μοντέλο
 import com.multibot.namira.repository.UserRepository;
-import com.multibot.namira.repository.EventRepository; // <--- Import το repository των events σου
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
