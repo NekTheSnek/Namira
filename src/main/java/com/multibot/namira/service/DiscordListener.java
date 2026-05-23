@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
-import java.util.Objects;
 
 @Service
 public class DiscordListener extends ListenerAdapter {
@@ -19,11 +18,11 @@ public class DiscordListener extends ListenerAdapter {
     @Autowired
     private UserRepository userRepository;
 
-
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String command = event.getName();
 
+        // 🔒 ADMIN COMMAND: Στήνει το αρχικό, μόνιμο μήνυμα
         if (command.equals("setup_welcome")) {
             EmbedBuilder welcome = new EmbedBuilder()
                     .setTitle("Welcome to Namira! / Καλώς ήρθατε!")
@@ -31,6 +30,7 @@ public class DiscordListener extends ListenerAdapter {
                             "Παρακαλώ επιλέξτε γλώσσα για να ξεκλειδώσετε τον server.")
                     .setColor(Color.MAGENTA);
 
+            // sendMessageEmbeds -> Το στέλνει κανονικά στο κανάλι και ΜΕΝΕΙ ΕΚΕΙ ΓΙΑ ΠΑΝΤΑ
             event.getChannel().sendMessageEmbeds(welcome.build())
                     .addActionRow(
                             Button.primary("lang-el", "Ελληνικά 🇬🇷"),
@@ -39,9 +39,11 @@ public class DiscordListener extends ListenerAdapter {
                     )
                     .queue();
 
+            // Απαντάμε κρυφά στον Admin ότι η εντολή εκτελέστηκε
             event.reply("Welcome message spawned!").setEphemeral(true).queue();
         }
 
+        // SLASH COMMAND: Χειροκίνητη αλλαγή γλώσσας (κρυφό embed)
         if (command.equals("set_language")) {
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("🌐 Language Selection / Επιλογή Γλώσσας")
@@ -87,35 +89,6 @@ public class DiscordListener extends ListenerAdapter {
             }
 
             event.replyEmbeds(successEmbed.build()).setEphemeral(true).queue();
-
-        } else if (command.equals("create-event")) { // 🌟 ΕΔΩ: Η ΝΕΑ ΕΝΤΟΛΗ ΜΑΣ!
-            String discordId = event.getUser().getId();
-
-            // Παίρνουμε τα options που έγραψε ο χρήστης στο Discord
-            String title = Objects.requireNonNull(event.getOption("title")).getAsString();
-            String description = event.getOption("description") != null ?
-                    Objects.requireNonNull(event.getOption("description")).getAsString() : "No description provided.";
-
-            // Ψάχνουμε τη γλώσσα του χρήστη για να του απαντήσουμε σωστά
-            User user = userRepository.findByDiscordId(discordId).orElse(null);
-            String lang = (user != null) ? user.getPreferredLanguage() : "en";
-
-
-            // Φτιάχνουμε το Embed απάντησης ανάλογα με τη γλώσσα του
-            EmbedBuilder eventEmbed = new EmbedBuilder()
-                    .setColor(Color.ORANGE)
-                    .setThumbnail(event.getUser().getEffectiveAvatarUrl());
-
-            switch (lang) {
-                case "el" -> eventEmbed.setTitle("📅 Το Event Δημιουργήθηκε Επιτυχώς!")
-                        .setDescription("**Τίτλος:** " + title + "\n**Περιγραφή:** " + description + "\n\n*Αποθηκεύτηκε στη βάση δεδομένων της Namira!*");
-                case "fr" -> eventEmbed.setTitle("📅 Événement Créé avec Succès!")
-                        .setDescription("**Titre:** " + title + "\n**Description:** " + description + "\n\n*Enregistré dans la base de données !*");
-                default -> eventEmbed.setTitle("📅 Event Created Successfully!")
-                        .setDescription("**Title:** " + title + "\n**Description:** " + description + "\n\n*Saved in Namira database!*");
-            }
-
-            event.replyEmbeds(eventEmbed.build()).setEphemeral(true).queue();
         }
     }
 
@@ -128,6 +101,7 @@ public class DiscordListener extends ListenerAdapter {
             String discordId = event.getUser().getId();
             String name = event.getUser().getName();
 
+            // Αποθήκευση ή ενημέρωση στη βάση
             userRepository.findByDiscordId(discordId).ifPresentOrElse(user -> {
                 user.setPreferredLanguage(selectedLang);
                 userRepository.save(user);
@@ -145,7 +119,10 @@ public class DiscordListener extends ListenerAdapter {
                 default -> replyEmbed.setDescription("✨ Language successfully changed to **English**!");
             }
 
-            event.editMessageEmbeds(replyEmbed.build()).setComponents().queue();
+            // 🔥 Η ΜΕΓΑΛΗ ΑΛΛΑΓΗ: Χρησιμοποιούμε event.replyEmbeds().setEphemeral(true)
+            // Αντί να αλλάξουμε το κεντρικό μήνυμα, απαντάμε στον χρήστη με ένα ΚΡΥΦΟ μήνυμα που βλέπει ΜΟΝΟ αυτός.
+            // Έτσι, το welcome μήνυμα στο κανάλι μένει άθικτο και πεντακάθαρο για τον επόμενο!
+            event.replyEmbeds(replyEmbed.build()).setEphemeral(true).queue();
         }
     }
 }
