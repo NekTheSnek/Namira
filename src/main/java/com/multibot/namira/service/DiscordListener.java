@@ -18,27 +18,21 @@ public class DiscordListener extends ListenerAdapter {
     private final TranslationService ts;
     private final TimeService timeService;
 
-    // Constructor Injection για απόλυτη ασφάλεια και Clean Architecture
+    // Constructor Injection για τα Services
     public DiscordListener(UserRepository userRepository, TranslationService ts, TimeService timeService) {
         this.userRepository = userRepository;
         this.ts = ts;
         this.timeService = timeService;
     }
 
+    // 1. ΜΟΝΟ Ο ADMIN ΕΧΕΙ COMMAND (Για να στήσει το Welcome Message)
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        String command = event.getName();
-        Long userId = event.getUser().getIdLong(); // Το παίρνουμε ως Long για τη βάση
-
-        // Τραβάμε τον χρήστη για να ξέρουμε τη γλώσσα του. Αν δεν υπάρχει, default "en"
-        User currentUser = userRepository.findByDiscordId(userId).orElse(null);
-        String lang = (currentUser != null) ? currentUser.getPreferredLanguage() : "en";
-
-        // 1. ADMIN COMMAND: /setup_welcome
-        if (command.equals("setup_welcome")) {
+        if (event.getName().equals("setup_welcome")) {
             EmbedBuilder welcome = new EmbedBuilder()
-                    .setTitle(ts.get(lang, "welcome_title"))
-                    .setDescription(ts.get(lang, "welcome_desc"))
+                    .setTitle("Welcome to Namira! / Καλώς ήρθατε!")
+                    .setDescription("Please select your language to unlock the rest of the server.\n" +
+                            "Παρακαλώ επιλέξτε γλώσσα για να ξεκλειδώσετε τον server.")
                     .setColor(Color.MAGENTA);
 
             event.getChannel().sendMessageEmbeds(welcome.build())
@@ -51,65 +45,9 @@ public class DiscordListener extends ListenerAdapter {
 
             event.reply("Welcome message spawned!").setEphemeral(true).queue();
         }
-
-        // 2. SLASH COMMAND: /set_language
-        else if (command.equals("set_language")) {
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle(lang.equals("el") ? "🌐 Επιλογή Γλώσσας" : lang.equals("fr") ? "🌐 Choix de la Langue" : "🌐 Language Selection")
-                    .setDescription(lang.equals("el") ? "Επιλέξτε την γλώσσα προτίμησής σας παρακάτω." : lang.equals("fr") ? "Veuillez sélectionner votre langue ci-dessous." : "Please select your preferred language below.")
-                    .setColor(new Color(114, 137, 218))
-                    .setThumbnail(event.getJDA().getSelfUser().getEffectiveAvatarUrl());
-
-            event.replyEmbeds(embed.build())
-                    .addActionRow(
-                            Button.primary("lang-el", "Ελληνικά 🇬🇷"),
-                            Button.secondary("lang-en", "English 🇺🇸"),
-                            Button.danger("lang-fr", "Français 🇫🇷")
-                    )
-                    .setEphemeral(true)
-                    .queue();
-        }
-
-        // 3. SLASH COMMAND: /register
-        else if (command.equals("register")) {
-            String name = event.getUser().getName();
-
-            if (currentUser == null) {
-                // Χρήση του Long userId στον Constructor
-                currentUser = new User(name, name + "@discord.com", userId);
-                userRepository.save(currentUser);
-            }
-
-            EmbedBuilder successEmbed = new EmbedBuilder()
-                    .setThumbnail(event.getUser().getEffectiveAvatarUrl())
-                    .setColor(Color.GREEN);
-
-            switch (lang) {
-                case "el" -> successEmbed.setTitle("✅ Η εγγραφή ολοκληρώθηκε!")
-                        .setDescription("Γεια σου **" + name + "**!\nΚαλώς όρισες στο σύστημα της Namira. Τα στοιχεία σου αποθηκεύτηκαν με ασφάλεια.");
-                case "fr" -> successEmbed.setTitle("✅ Inscription Réussie!")
-                        .setDescription("Bonjour **" + name + "**!\nBienvenue sur Namira. Vos données ont été enregistrées avec succès.");
-                default -> successEmbed.setTitle("✅ Registration Successful!")
-                        .setDescription("Hello **" + name + "**!\nWelcome to Namira system. Your details have been securely saved.");
-            }
-
-            event.replyEmbeds(successEmbed.build()).setEphemeral(true).queue();
-        }
-
-        // 4. AUTOMATIC TOOLS COMMAND: /time (Τοπική ώρα βάσει Χρήστη)
-        else if (command.equals("time")) {
-            if (currentUser == null) {
-                event.reply(ts.get(lang, "no_user")).setEphemeral(true).queue();
-                return;
-            }
-
-            String localTime = timeService.formatUserTime(currentUser);
-            String response = ts.get(lang, "current_time") + " **" + localTime + "**";
-
-            event.reply(response).setEphemeral(true).queue();
-        }
     }
 
+    // 2. ΟΙ ΧΡΗΣΤΕΣ ΠΑΤΑΝΕ ΜΟΝΟ ΚΟΥΜΠΙΑ (Αποθήκευση & Εμφάνιση Ώρας)
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String buttonId = event.getComponentId();
@@ -119,22 +57,33 @@ public class DiscordListener extends ListenerAdapter {
             Long userId = event.getUser().getIdLong();
             String name = event.getUser().getName();
 
-            // Αναζήτηση και δυναμική ενημέρωση Γλώσσας ΚΑΙ Timezone στη βάση
-            User user = userRepository.findByDiscordId(userId).orElse(new User(name, name + "@discord.com", userId));
+            // 1. Αποθήκευση ή ενημέρωση στη βάση
+            User user = userRepository.findByDiscordId(userId)
+                    .orElse(new User(name, name + "@discord.com", userId));
+
             user.setPreferredLanguage(selectedLang);
 
-            // Αυτόματη αντιστοίχιση Timezone βάσει της γλώσσας που πάτησε
+            // 2. Ανάθεση Timezone ανάλογα με το κουμπί
             switch (selectedLang) {
                 case "el" -> user.setTimezone("Europe/Athens");
                 case "fr" -> user.setTimezone("Europe/Paris");
-                default -> user.setTimezone("Europe/London"); // Ή America/New_York
+                default -> user.setTimezone("Europe/London");
             }
 
             userRepository.save(user);
 
-            EmbedBuilder replyEmbed = new EmbedBuilder().setColor(Color.CYAN);
-            replyEmbed.setDescription(ts.get(selectedLang, "lang_changed"));
+            // 3. Παίρνουμε την τοπική ώρα από το TimeService
+            String localTime = timeService.formatUserTime(user);
 
+            // 4. Φτιάχνουμε το κρυφό embed απάντησης
+            EmbedBuilder replyEmbed = new EmbedBuilder().setColor(Color.CYAN);
+
+            String successMessage = ts.get(selectedLang, "lang_changed");
+            String timeMessage = ts.get(selectedLang, "current_time") + " **" + localTime + "**";
+
+            replyEmbed.setDescription(successMessage + "\n" + timeMessage);
+
+            // Απάντηση στον χρήστη κρυφά
             event.replyEmbeds(replyEmbed.build()).setEphemeral(true).queue();
         }
     }
