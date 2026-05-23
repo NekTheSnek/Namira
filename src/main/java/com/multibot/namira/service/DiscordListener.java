@@ -25,7 +25,7 @@ public class DiscordListener extends ListenerAdapter {
         this.timeService = timeService;
     }
 
-    // 1. ΜΟΝΟ Ο ADMIN ΕΧΕΙ COMMAND (Για να στήσει το Welcome Message)
+    // 1. Ο ADMIN ΣΤΗΝΕΙ ΤΟ WELCOME EMBED
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (event.getName().equals("setup_welcome")) {
@@ -35,6 +35,7 @@ public class DiscordListener extends ListenerAdapter {
                             "Παρακαλώ επιλέξτε γλώσσα για να ξεκλειδώσετε τον server.")
                     .setColor(Color.MAGENTA);
 
+            // Προσοχή στα IDs: "lang-el", "lang-en", "lang-fr"
             event.getChannel().sendMessageEmbeds(welcome.build())
                     .addActionRow(
                             Button.primary("lang-el", "Ελληνικά 🇬🇷"),
@@ -47,35 +48,37 @@ public class DiscordListener extends ListenerAdapter {
         }
     }
 
-    // 2. ΟΙ ΧΡΗΣΤΕΣ ΠΑΤΑΝΕ ΜΟΝΟ ΚΟΥΜΠΙΑ (Αποθήκευση & Εμφάνιση Ώρας)
+    // 2. ΟΤΑΝ ΟΙ ΧΡΗΣΤΕΣ ΠΑΤΑΝΕ ΤΑ ΚΟΥΜΠΙΑ
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String buttonId = event.getComponentId();
 
+        // Ελέγχουμε αν το κουμπί ξεκινάει από "lang-"
         if (buttonId.startsWith("lang-")) {
-            String selectedLang = buttonId.substring(5);
+            String selectedLang = buttonId.substring(5); // Παίρνει το "el", "en" ή "fr"
             Long userId = event.getUser().getIdLong();
             String name = event.getUser().getName();
 
-            // 1. Αποθήκευση ή ενημέρωση στη βάση
+            // Αναζήτηση ή δημιουργία χρήστη στη βάση με Long Discord ID
             User user = userRepository.findByDiscordId(userId)
                     .orElse(new User(name, name + "@discord.com", userId));
 
             user.setPreferredLanguage(selectedLang);
 
-            // 2. Ανάθεση Timezone ανάλογα με το κουμπί
+            // Αντιστοίχιση Timezone βάσει της γλώσσας
             switch (selectedLang) {
                 case "el" -> user.setTimezone("Europe/Athens");
                 case "fr" -> user.setTimezone("Europe/Paris");
                 default -> user.setTimezone("Europe/London");
             }
 
+            // Αποθήκευση στην PostgreSQL
             userRepository.save(user);
 
-            // 3. Παίρνουμε την τοπική ώρα από το TimeService
+            // Παίρνουμε την ώρα από το TimeService
             String localTime = timeService.formatUserTime(user);
 
-            // 4. Φτιάχνουμε το κρυφό embed απάντησης
+            // Δημιουργία του κρυφού embed επιβεβαίωσης
             EmbedBuilder replyEmbed = new EmbedBuilder().setColor(Color.CYAN);
 
             String successMessage = ts.get(selectedLang, "lang_changed");
@@ -83,7 +86,7 @@ public class DiscordListener extends ListenerAdapter {
 
             replyEmbed.setDescription(successMessage + "\n" + timeMessage);
 
-            // Απάντηση στον χρήστη κρυφά
+            // Απαντάμε στον χρήστη κρυφά (Ephemeral) για να ολοκληρωθεί το interaction
             event.replyEmbeds(replyEmbed.build()).setEphemeral(true).queue();
         }
     }
