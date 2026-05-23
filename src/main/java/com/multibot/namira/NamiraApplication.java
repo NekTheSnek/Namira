@@ -20,19 +20,18 @@ public class NamiraApplication {
 
         String token = context.getEnvironment().getProperty("BOT_TOKEN");
 
-        // 🛠️ Κρατάμε ΜΟΝΟ τον DiscordListener που έχεις ήδη στο φάκελό σου!
+        // 🛠️ Παίρνουμε ΜΟΝΟ τον δικό σου κλασικό DiscordListener
         DiscordListener listener = context.getBean(DiscordListener.class);
 
         if (token != null && !token.isEmpty()) {
             JDA jda = JDABuilder.createDefault(token)
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
-                    .addEventListeners(listener) // Μόνο αυτόν τον listener δηλώνουμε
+                    .addEventListeners(listener) // Μόνο αυτόν δηλώνουμε!
                     .build();
 
-            // Περιμένουμε να συνδεθεί το Bot στο Discord
             jda.awaitReady();
 
-            // Ο Server σου (Διορθωμένο String με 19 ψηφία αντί για 20)
+            // Ο Server σου
             Guild guild = jda.getGuildById("1123699556764562642");
 
             if (guild != null) {
@@ -42,7 +41,7 @@ public class NamiraApplication {
                                 net.dv8tion.jda.api.interactions.commands.build.Commands.slash("set_language", "Αλλαγή γλώσσας / Change language"),
                                 net.dv8tion.jda.api.interactions.commands.build.Commands.slash("setup_welcome", "Admin only: Spawns the welcome message"),
 
-                                // 🔒 Η εντολή /create-event με τις επιλογές της και κλείδωμα για απλούς χρήστες
+                                // 🔒 Προσθήκη /create-event με δικαιώματα μόνο για Admins/Moderators
                                 net.dv8tion.jda.api.interactions.commands.build.Commands.slash("create-event", "Δημιουργήστε ένα νέο Event!")
                                         .addOption(OptionType.STRING, "title", "Ο τίτλος του event", true)
                                         .addOption(OptionType.STRING, "description", "Η περιγραφή του event", false)

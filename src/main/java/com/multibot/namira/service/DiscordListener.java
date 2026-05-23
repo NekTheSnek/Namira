@@ -1,7 +1,6 @@
 package com.multibot.namira.service;
 
 import com.multibot.namira.model.User;
-import com.multibot.namira.model.Event; // <--- Σιγουρέψου ότι έχεις αυτό το μοντέλο
 import com.multibot.namira.repository.UserRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -20,8 +19,6 @@ public class DiscordListener extends ListenerAdapter {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private EventRepository eventRepository; // <--- ΕΔΩ: Inject το repository για να σώζουμε τα events
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -103,12 +100,6 @@ public class DiscordListener extends ListenerAdapter {
             User user = userRepository.findByDiscordId(discordId).orElse(null);
             String lang = (user != null) ? user.getPreferredLanguage() : "en";
 
-            // Αποθήκευση του Event στη βάση δεδομένων
-            Event newEvent = new Event();
-            newEvent.setTitle(title);
-            newEvent.setDescription(description);
-            newEvent.setCreatorDiscordId(discordId);
-            eventRepository.save(newEvent); // <--- Σώζεται live στη MySQL/PostgreSQL
 
             // Φτιάχνουμε το Embed απάντησης ανάλογα με τη γλώσσα του
             EmbedBuilder eventEmbed = new EmbedBuilder()
