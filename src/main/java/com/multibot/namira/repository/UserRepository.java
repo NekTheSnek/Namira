@@ -7,6 +7,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Ψάχνουμε με Long για να κουμπώνει 100% με το User.java σου!
+    // Αλλάζουμε το String σε Long για να ταιριάζει με τη βάση και το User.java σου!
     Optional<User> findByDiscordId(Long discordId);
 }

@@ -27,7 +27,6 @@ public class DiscordListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (event.getName().equals("setup_welcome")) {
-            // Παίρνουμε τους τίτλους από το TranslationService (Default στα αγγλικά για το αρχικό embed)
             EmbedBuilder welcome = new EmbedBuilder()
                     .setTitle(ts.get("en", "welcome_title"))
                     .setDescription(ts.get("en", "welcome_desc"))
@@ -50,19 +49,18 @@ public class DiscordListener extends ListenerAdapter {
         String buttonId = event.getComponentId();
 
         if (buttonId.startsWith("lang-")) {
-            String selectedLang = buttonId.substring(5); // "el", "en", "fr"
+            String selectedLang = buttonId.substring(5);
 
-            // Παίρνουμε το ID ως Long για να κουμπώσει με το User.java σου!
+            // Παίρνουμε το ID ως Long απευθείας από το JDA
             Long discordId = event.getUser().getIdLong();
             String name = event.getUser().getName();
 
-            // Αναζήτηση ή δημιουργία με τον constructor σου
+            // Αναζήτηση και δημιουργία με τον constructor του User.java
             User user = userRepository.findByDiscordId(discordId)
                     .orElse(new User(name, name + "@discord.com", discordId));
 
             user.setPreferredLanguage(selectedLang);
 
-            // Ανάθεση σωστού Timezone βάσει γλώσσας
             switch (selectedLang) {
                 case "el" -> user.setTimezone("Europe/Athens");
                 case "fr" -> user.setTimezone("Europe/Paris");
@@ -71,17 +69,14 @@ public class DiscordListener extends ListenerAdapter {
 
             userRepository.save(user);
 
-            // Παίρνουμε την τοπική ώρα μορφοποιημένη
             String localTime = timeService.formatUserTime(user);
 
-            // Φτιάχνουμε την απάντηση χρησιμοποιώντας το TranslationService σου!
             EmbedBuilder replyEmbed = new EmbedBuilder().setColor(Color.CYAN);
             String successMessage = ts.get(selectedLang, "lang_changed");
             String timeMessage = ts.get(selectedLang, "current_time") + " **" + localTime + "**";
 
             replyEmbed.setDescription(successMessage + "\n" + timeMessage);
 
-            // Στέλνουμε την κρυφή (ephemeral) απάντηση στον χρήστη
             event.replyEmbeds(replyEmbed.build()).setEphemeral(true).queue();
         }
     }
