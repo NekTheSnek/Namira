@@ -27,10 +27,10 @@ public class DiscordListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (event.getName().equals("setup_welcome")) {
+            // Παίρνουμε τους τίτλους από το TranslationService (Default στα αγγλικά για το αρχικό embed)
             EmbedBuilder welcome = new EmbedBuilder()
-                    .setTitle("Welcome to Namira! / Καλώς ήρθατε!")
-                    .setDescription("Please select your language to unlock the rest of the server.\n" +
-                            "Παρακαλώ επιλέξτε γλώσσα για να ξεκλειδώσετε τον server.")
+                    .setTitle(ts.get("en", "welcome_title"))
+                    .setDescription(ts.get("en", "welcome_desc"))
                     .setColor(Color.MAGENTA);
 
             event.getChannel().sendMessageEmbeds(welcome.build())
@@ -50,31 +50,19 @@ public class DiscordListener extends ListenerAdapter {
         String buttonId = event.getComponentId();
 
         if (buttonId.startsWith("lang-")) {
-            String selectedLang = buttonId.substring(5);
+            String selectedLang = buttonId.substring(5); // "el", "en", "fr"
 
-            // Κρατάμε το ID ως String ακριβώς όπως το θέλει το Repository σου!
-            String discordId = event.getUser().getId();
+            // Παίρνουμε το ID ως Long για να κουμπώσει με το User.java σου!
+            Long discordId = event.getUser().getIdLong();
             String name = event.getUser().getName();
 
-            // Αναζήτηση με String ID και δημιουργία αν δεν υπάρχει
+            // Αναζήτηση ή δημιουργία με τον constructor σου
             User user = userRepository.findByDiscordId(discordId)
-                    .orElseGet(() -> {
-                        User newUser = new User();
-                        newUser.setUsername(name);
-                        newUser.setEmail(name + "@discord.com");
-                        // Αν το setDiscordId σου δέχεται Long, το μετατρέπει εδώ αυτόματα.
-                        // Αν δέχεται String, βγάζεις απλά το Long.parseLong()
-                        try {
-                            newUser.setDiscordId(Long.parseLong(discordId));
-                        } catch (Exception e) {
-                            // Αν το μοντέλο σου τελικά το έχει String, θα μπει από εδώ:
-                            // newUser.setDiscordId(discordId);
-                        }
-                        return newUser;
-                    });
+                    .orElse(new User(name, name + "@discord.com", discordId));
 
             user.setPreferredLanguage(selectedLang);
 
+            // Ανάθεση σωστού Timezone βάσει γλώσσας
             switch (selectedLang) {
                 case "el" -> user.setTimezone("Europe/Athens");
                 case "fr" -> user.setTimezone("Europe/Paris");
@@ -83,14 +71,17 @@ public class DiscordListener extends ListenerAdapter {
 
             userRepository.save(user);
 
+            // Παίρνουμε την τοπική ώρα μορφοποιημένη
             String localTime = timeService.formatUserTime(user);
 
+            // Φτιάχνουμε την απάντηση χρησιμοποιώντας το TranslationService σου!
             EmbedBuilder replyEmbed = new EmbedBuilder().setColor(Color.CYAN);
             String successMessage = ts.get(selectedLang, "lang_changed");
             String timeMessage = ts.get(selectedLang, "current_time") + " **" + localTime + "**";
 
             replyEmbed.setDescription(successMessage + "\n" + timeMessage);
 
+            // Στέλνουμε την κρυφή (ephemeral) απάντηση στον χρήστη
             event.replyEmbeds(replyEmbed.build()).setEphemeral(true).queue();
         }
     }
