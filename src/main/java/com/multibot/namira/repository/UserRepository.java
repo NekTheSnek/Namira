@@ -8,6 +8,6 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // Το γυρνάμε σε Long για να κουμπώσει με το User.java και τον DiscordListener!
-    Optional<User> findByDiscordId(Long discordId);
+    // Εδώ σιγουρεύουμε ότι ψάχνει με String, όπως το έχεις!
+    Optional<User> findByDiscordId(String discordId);
 }

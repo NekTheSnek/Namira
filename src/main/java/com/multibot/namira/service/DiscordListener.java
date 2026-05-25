@@ -18,14 +18,12 @@ public class DiscordListener extends ListenerAdapter {
     private final TranslationService ts;
     private final TimeService timeService;
 
-    // Constructor Injection για τα Services
     public DiscordListener(UserRepository userRepository, TranslationService ts, TimeService timeService) {
         this.userRepository = userRepository;
         this.ts = ts;
         this.timeService = timeService;
     }
 
-    // 1. Ο ADMIN ΣΤΗΝΕΙ ΤΟ WELCOME EMBED
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (event.getName().equals("setup_welcome")) {
@@ -35,7 +33,6 @@ public class DiscordListener extends ListenerAdapter {
                             "Παρακαλώ επιλέξτε γλώσσα για να ξεκλειδώσετε τον server.")
                     .setColor(Color.MAGENTA);
 
-            // Προσοχή στα IDs: "lang-el", "lang-en", "lang-fr"
             event.getChannel().sendMessageEmbeds(welcome.build())
                     .addActionRow(
                             Button.primary("lang-el", "Ελληνικά 🇬🇷"),
@@ -48,45 +45,52 @@ public class DiscordListener extends ListenerAdapter {
         }
     }
 
-    // 2. ΟΤΑΝ ΟΙ ΧΡΗΣΤΕΣ ΠΑΤΑΝΕ ΤΑ ΚΟΥΜΠΙΑ
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String buttonId = event.getComponentId();
 
-        // Ελέγχουμε αν το κουμπί ξεκινάει από "lang-"
         if (buttonId.startsWith("lang-")) {
-            String selectedLang = buttonId.substring(5); // Παίρνει το "el", "en" ή "fr"
-            Long userId = event.getUser().getIdLong();
+            String selectedLang = buttonId.substring(5);
+
+            // Κρατάμε το ID ως String ακριβώς όπως το θέλει το Repository σου!
+            String discordId = event.getUser().getId();
             String name = event.getUser().getName();
 
-            // Αναζήτηση ή δημιουργία χρήστη στη βάση με Long Discord ID
-            User user = userRepository.findByDiscordId(userId)
-                    .orElse(new User(name, name + "@discord.com", userId));
+            // Αναζήτηση με String ID και δημιουργία αν δεν υπάρχει
+            User user = userRepository.findByDiscordId(discordId)
+                    .orElseGet(() -> {
+                        User newUser = new User();
+                        newUser.setUsername(name);
+                        newUser.setEmail(name + "@discord.com");
+                        // Αν το setDiscordId σου δέχεται Long, το μετατρέπει εδώ αυτόματα.
+                        // Αν δέχεται String, βγάζεις απλά το Long.parseLong()
+                        try {
+                            newUser.setDiscordId(Long.parseLong(discordId));
+                        } catch (Exception e) {
+                            // Αν το μοντέλο σου τελικά το έχει String, θα μπει από εδώ:
+                            // newUser.setDiscordId(discordId);
+                        }
+                        return newUser;
+                    });
 
             user.setPreferredLanguage(selectedLang);
 
-            // Αντιστοίχιση Timezone βάσει της γλώσσας
             switch (selectedLang) {
                 case "el" -> user.setTimezone("Europe/Athens");
                 case "fr" -> user.setTimezone("Europe/Paris");
                 default -> user.setTimezone("Europe/London");
             }
 
-            // Αποθήκευση στην PostgreSQL
             userRepository.save(user);
 
-            // Παίρνουμε την ώρα από το TimeService
             String localTime = timeService.formatUserTime(user);
 
-            // Δημιουργία του κρυφού embed επιβεβαίωσης
             EmbedBuilder replyEmbed = new EmbedBuilder().setColor(Color.CYAN);
-
             String successMessage = ts.get(selectedLang, "lang_changed");
             String timeMessage = ts.get(selectedLang, "current_time") + " **" + localTime + "**";
 
             replyEmbed.setDescription(successMessage + "\n" + timeMessage);
 
-            // Απαντάμε στον χρήστη κρυφά (Ephemeral) για να ολοκληρωθεί το interaction
             event.replyEmbeds(replyEmbed.build()).setEphemeral(true).queue();
         }
     }
