@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.springframework.stereotype.Service;
-
 import java.awt.Color;
 
 @Service
@@ -51,16 +50,15 @@ public class DiscordListener extends ListenerAdapter {
         if (buttonId.startsWith("lang-")) {
             String selectedLang = buttonId.substring(5);
 
-            // Παίρνουμε το ID ως Long απευθείας από το JDA
             Long discordId = event.getUser().getIdLong();
             String name = event.getUser().getName();
 
-            // Αναζήτηση και δημιουργία με τον constructor του User.java
             User user = userRepository.findByDiscordId(discordId)
                     .orElse(new User(name, name + "@discord.com", discordId));
 
             user.setPreferredLanguage(selectedLang);
 
+            // Αυτόματη ανάθεση Timezone ανάλογα με τη γλώσσα που πάτησε
             switch (selectedLang) {
                 case "el" -> user.setTimezone("Europe/Athens");
                 case "fr" -> user.setTimezone("Europe/Paris");

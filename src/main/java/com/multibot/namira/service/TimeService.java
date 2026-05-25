@@ -1,4 +1,5 @@
 package com.multibot.namira.service;
+
 import com.multibot.namira.model.User;
 import org.springframework.stereotype.Service;
 import java.time.ZonedDateTime;
@@ -13,6 +14,7 @@ public class TimeService {
         ZoneId zoneId = ZoneId.of(timezoneId);
         ZonedDateTime userDateTime = ZonedDateTime.now(zoneId);
 
+        // Εμφανίζει Ώρα:Λεπτά και (Ημέρα-Μήνας-Έτος)
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm (dd-MM-yyyy)");
         return userDateTime.format(formatter);
     }
