@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class NamiraApplication {
 
-    @Value("${discord.bot.token}")
+    @Value("${BOT_TOKEN}") // Τώρα θα βρει ακριβώς αυτό που έχεις στο image_e10147.png
     private String botToken;
 
     public static void main(String[] args) {
