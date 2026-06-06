@@ -14,7 +14,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/", "/favicon.ico").permitAll();
+                    // Προσθήκη του /error για να μην κολλάει το Spring
+                    auth.requestMatchers("/", "/favicon.ico", "/error").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .oauth2Login(Customizer.withDefaults())
