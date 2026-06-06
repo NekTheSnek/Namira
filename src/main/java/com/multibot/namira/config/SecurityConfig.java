@@ -2,24 +2,22 @@ package com.multibot.namira.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-@EnableWebSecurity
 public class SecurityConfig {
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .authorizeHttpRequests(auth -> {
-                    // Προσθήκη του /error για να μην κολλάει το Spring
-                    auth.requestMatchers("/", "/favicon.ico", "/error").permitAll();
-                    auth.anyRequest().authenticated();
-                })
-                .oauth2Login(Customizer.withDefaults())
-                .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
-                .build();
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/login", "/css/**").permitAll() // Ελεύθερη πρόσβαση στο αρχικό
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form.loginPage("/").permitAll()) // Δικό σας login
+                .oauth2Login(oauth -> oauth.loginPage("/")); // Google μόνο αν πατήσουν το κουμπί
+
+        return http.build();
     }
 }
