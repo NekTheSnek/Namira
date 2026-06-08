@@ -1,9 +1,19 @@
 package com.multibot.namira.controller;
 
+import com.multibot.namira.model.User;
+import com.multibot.namira.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class Controller {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     private String getStyles() {
         return "<style>" +
@@ -16,27 +26,22 @@ public class Controller {
                 "</style>";
     }
 
-    // Η κεντρική σελίδα που τα έχει όλα
     @GetMapping("/")
     public String home() {
         return getStyles() +
                 "<div class='container'>" +
                 "<h2>Namira Auth</h2>" +
-                // LOGIN ΦΟΡΜΑ
                 "<form action='/login' method='post'>" +
                 "  <input type='text' name='username' placeholder='Username'><br>" +
                 "  <input type='password' name='password' placeholder='Password'><br>" +
                 "  <button class='btn-blue'>Sign In</button>" +
                 "</form>" +
                 "<hr>" +
-                // SIGN UP ΛΙΝΚ
                 "<p>Don't have an account? <a href='/signup'>Sign Up</a></p>" +
-                // GOOGLE EXTRA
                 "<a href='/oauth2/authorization/google'><button class='btn-google'>Sign In with Google</button></a>" +
                 "</div>";
     }
 
-    // Η σελίδα εγγραφής
     @GetMapping("/signup")
     public String signup() {
         return getStyles() +
@@ -50,18 +55,13 @@ public class Controller {
                 "<a href='/'>Back to Login</a>" +
                 "</div>";
     }
+
     @PostMapping("/register")
     public String register(@RequestParam String username, @RequestParam String password) {
-        // 1. Εδώ δημιουργείς το αντικείμενο User
         User newUser = new User();
         newUser.setUsername(username);
-        // ΠΡΟΣΟΧΗ: Χρησιμοποίησε έναν BCryptPasswordEncoder για τον κωδικό!
         newUser.setPassword(passwordEncoder.encode(password));
-
-        // 2. Το αποθηκεύεις στη βάση
         userRepository.save(newUser);
-
-        return "redirect:/"; // Επιστροφή στο Login
+        return "Registration successful! <a href='/'>Go to Login</a>";
     }
-
 }
