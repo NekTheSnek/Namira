@@ -47,4 +47,11 @@ public class Controller {
                 "<a href='/'><button class='btn-blue'>Home</button></a>" +
                 "</div>";
     }
+    @GetMapping("/admin/users")
+    public String listUsers() {
+        // 1. Εδώ τραβάς όλους τους χρήστες από το userRepository
+        // 2. Εμφανίζεις μια λίστα με τα emails τους
+        // 3. Δίπλα σε κάθε όνομα βάζεις ένα κουμπί "Make Admin" ή "Delete"
+        return "Styles..." + "<div> ... πίνακας χρηστών ... </div>";
+    }
 }
