@@ -7,4 +7,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByDiscordId(Long discordId);
     Optional<User> findByEmail(String email);
+
+    // Προσθήκη για να μπορεί το σύστημα να βρίσκει τον χρήστη κατά το Login
+    Optional<User> findByUsername(String username);
 }
