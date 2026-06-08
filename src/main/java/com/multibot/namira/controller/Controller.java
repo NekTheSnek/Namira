@@ -50,4 +50,18 @@ public class Controller {
                 "<a href='/'>Back to Login</a>" +
                 "</div>";
     }
+    @PostMapping("/register")
+    public String register(@RequestParam String username, @RequestParam String password) {
+        // 1. Εδώ δημιουργείς το αντικείμενο User
+        User newUser = new User();
+        newUser.setUsername(username);
+        // ΠΡΟΣΟΧΗ: Χρησιμοποίησε έναν BCryptPasswordEncoder για τον κωδικό!
+        newUser.setPassword(passwordEncoder.encode(password));
+
+        // 2. Το αποθηκεύεις στη βάση
+        userRepository.save(newUser);
+
+        return "redirect:/"; // Επιστροφή στο Login
+    }
+
 }
