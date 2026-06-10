@@ -49,7 +49,8 @@ public class Controller {
                 "<h2>Create Account</h2>" +
                 "<form action='/register' method='post'>" +
                 "  <input type='text' name='username' placeholder='Choose Username'><br>" +
-                "  <input type='password' name='password' placeholder='Choose Password'><br>" +
+                "  <input type='email' name='email' placeholder='Enter Email' required><br>" +
+                "  <input type='password' name='password' placeholder='Choose Password' required><br>" +
                 "  <button class='btn-blue'>Register</button>" +
                 "</form>" +
                 "<a href='/'>Back to Login</a>" +
@@ -57,9 +58,10 @@ public class Controller {
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam String username, @RequestParam String password) {
+    public String register(@RequestParam String username, @RequestParam String email, @RequestParam String password) {
         User newUser = new User();
         newUser.setUsername(username);
+        newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
         userRepository.save(newUser);
         return "Registration successful! <a href='/'>Go to Login</a>";
