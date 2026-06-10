@@ -22,6 +22,7 @@ public class Controller {
                 "input { width: 90%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }" +
                 "button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 4px; border: none; cursor: pointer; }" +
                 ".btn-blue { background: #007bff; color: white; }" +
+                ".btn-google { background: #db4437; color: white; margin-top: 20px; }" +
                 "</style>";
     }
 
@@ -60,14 +61,12 @@ public class Controller {
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
-
-        // Ο πρώτος χρήστης που γράφεται γίνεται αυτόματα ADMIN
-        if (userRepository.count() == 0) {
+        // Εδώ μπορείς να ορίσεις αν είναι admin (π.χ. με βάση το email)
+        if(email.equals("your-email@example.com")) {
             newUser.setRole("ADMIN");
         } else {
             newUser.setRole("USER");
         }
-
         userRepository.save(newUser);
         return "Registration successful! <a href='/'>Go to Login</a>";
     }
