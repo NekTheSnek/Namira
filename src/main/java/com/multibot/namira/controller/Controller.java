@@ -32,12 +32,13 @@ public class Controller {
                 "<div class='container'>" +
                 "<h2>Namira Auth</h2>" +
                 "<form action='/login' method='post'>" +
-                "  <input type='text' name='username' autocomplete='username' placeholder='Username'><br>" +
-                "  <input type='password' name='password' autocomplete='current-password' placeholder='Password'><br>" +
-                "  <button type='submit' class='btn-blue'>Sign In</button>" +
+                "  <input type='text' name='username' placeholder='Username'><br>" +
+                "  <input type='password' name='password' placeholder='Password'><br>" +
+                "  <button class='btn-blue'>Sign In</button>" +
                 "</form>" +
                 "<hr>" +
                 "<p>Don't have an account? <a href='/signup'>Sign Up</a></p>" +
+                "<a href='/oauth2/authorization/google'><button class='btn-google'>Sign In with Google</button></a>" +
                 "</div>";
     }
 
@@ -47,26 +48,19 @@ public class Controller {
                 "<div class='container'>" +
                 "<h2>Create Account</h2>" +
                 "<form action='/register' method='post'>" +
-                "  <input type='text' name='username' autocomplete='username' placeholder='Choose Username' required><br>" +
-                "  <input type='email' name='email' autocomplete='email' placeholder='Enter Email' required><br>" +
-                "  <input type='password' name='password' autocomplete='new-password' placeholder='Choose Password' required><br>" +
-                "  <button type='submit' class='btn-blue'>Register</button>" +
+                "  <input type='text' name='username' placeholder='Choose Username'><br>" +
+                "  <input type='password' name='password' placeholder='Choose Password'><br>" +
+                "  <button class='btn-blue'>Register</button>" +
                 "</form>" +
+                "<a href='/'>Back to Login</a>" +
                 "</div>";
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam String username, @RequestParam String email, @RequestParam String password) {
+    public String register(@RequestParam String username, @RequestParam String password) {
         User newUser = new User();
         newUser.setUsername(username);
-        newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
-        // Εδώ μπορείς να ορίσεις αν είναι admin (π.χ. με βάση το email)
-        if(email.equals("your-email@example.com")) {
-            newUser.setRole("ADMIN");
-        } else {
-            newUser.setRole("USER");
-        }
         userRepository.save(newUser);
         return "Registration successful! <a href='/'>Go to Login</a>";
     }
