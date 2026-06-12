@@ -13,24 +13,19 @@ import org.springframework.stereotype.Service;
 public class DiscordListener extends ListenerAdapter {
 
     private final UserRepository userRepository;
-    private final TranslationService translationService;
 
-    public DiscordListener(UserRepository userRepository, TranslationService translationService) {
+    public DiscordListener(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.translationService = translationService;
     }
 
-    // 1. Διαχείριση Slash Commands (Μόνο για Admins)
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         if (event.getName().equals("setup_welcome")) {
-            // Έλεγχος δικαιωμάτων διαχειριστή
             if (!event.getMember().hasPermission(Permission.ADMINISTRATOR)) {
-                event.reply("❌ Δεν έχεις δικαιώματα διαχειριστή για αυτή την εντολή.").setEphemeral(true).queue();
+                event.reply("❌ Μόνο για Admins.").setEphemeral(true).queue();
                 return;
             }
-
-            // Αποστολή μηνύματος με κουμπιά
+            // Στέλνουμε το μήνυμα με τα κουμπιά
             event.reply("Καλώς ήρθες! Παρακαλώ επίλεξε τη γλώσσα σου:")
                     .addActionRow(
                             Button.primary("lang_el", "Ελληνικά"),
@@ -39,28 +34,28 @@ public class DiscordListener extends ListenerAdapter {
         }
     }
 
-    // 2. Διαχείριση Κουμπιών (Για όλους τους χρήστες)
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        String componentId = event.getComponentId();
+        // ΑΠΑΡΑΙΤΗΤΟ: Απαντάμε αμέσως στο Discord για να μην φάμε "Interaction Failed"
+        event.deferReply(true).queue();
 
+        String componentId = event.getComponentId();
         if (componentId != null && componentId.startsWith("lang_")) {
-            String lang = componentId.split("_")[1]; // παίρνει το 'el' ή 'en'
+            String lang = componentId.split("_")[1];
             long discordId = event.getUser().getIdLong();
 
-            // Αναζήτηση και αποθήκευση στη βάση (Hibernate/PostgreSQL)
             userRepository.findByDiscordId(discordId).ifPresentOrElse(
                     user -> {
                         user.setPreferredLanguage(lang);
                         userRepository.save(user);
-                        event.reply("✅ Η γλώσσα σου ενημερώθηκε σε: " + lang.toUpperCase()).setEphemeral(true).queue();
+                        event.getHook().sendMessage("✅ Η γλώσσα σου ενημερώθηκε σε: " + lang.toUpperCase()).queue();
                     },
                     () -> {
                         User newUser = new User();
                         newUser.setDiscordId(discordId);
                         newUser.setPreferredLanguage(lang);
                         userRepository.save(newUser);
-                        event.reply("✅ Καλώς ήρθες! Η γλώσσα σου ορίστηκε σε: " + lang.toUpperCase()).setEphemeral(true).queue();
+                        event.getHook().sendMessage("✅ Καλώς ήρθες! Η γλώσσα σου ορίστηκε σε: " + lang.toUpperCase()).queue();
                     }
             );
         }
