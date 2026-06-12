@@ -13,9 +13,11 @@ import org.springframework.stereotype.Service;
 public class DiscordListener extends ListenerAdapter {
 
     private final UserRepository userRepository;
+    private final TranslationService translationService;
 
-    public DiscordListener(UserRepository userRepository) {
+    public DiscordListener(UserRepository userRepository, TranslationService translationService) {
         this.userRepository = userRepository;
+        this.translationService = translationService;
     }
 
     @Override
@@ -25,18 +27,21 @@ public class DiscordListener extends ListenerAdapter {
                 event.reply("❌ Μόνο για Admins.").setEphemeral(true).queue();
                 return;
             }
-            // Στέλνουμε το μήνυμα με τα κουμπιά
-            event.reply("Καλώς ήρθες! Παρακαλώ επίλεξε τη γλώσσα σου:")
+            // Εδώ το μήνυμα στέλνεται κανονικά στο κανάλι (όχι ephemeral)
+            // για να μένει "καρφωμένο" σαν το Aleeva.
+            event.getChannel().sendMessage("Καλώς ήρθες! Παρακαλώ επίλεξε τη γλώσσα σου:")
                     .addActionRow(
                             Button.primary("lang_el", "Ελληνικά"),
                             Button.primary("lang_en", "English")
                     ).queue();
+
+            event.reply("Το μήνυμα υποδοχής στάλθηκε!").setEphemeral(true).queue();
         }
     }
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        // ΑΠΑΡΑΙΤΗΤΟ: Απαντάμε αμέσως στο Discord για να μην φάμε "Interaction Failed"
+        // Εδώ το deferReply σταματάει το "Interaction Failed"
         event.deferReply(true).queue();
 
         String componentId = event.getComponentId();
@@ -44,6 +49,7 @@ public class DiscordListener extends ListenerAdapter {
             String lang = componentId.split("_")[1];
             long discordId = event.getUser().getIdLong();
 
+            // Χρήση του getHook() για να απαντήσουμε μετά το deferReply
             userRepository.findByDiscordId(discordId).ifPresentOrElse(
                     user -> {
                         user.setPreferredLanguage(lang);
