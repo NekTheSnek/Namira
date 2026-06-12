@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.Permission;
 import org.springframework.stereotype.Service;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class DiscordListener extends ListenerAdapter {
@@ -27,8 +28,7 @@ public class DiscordListener extends ListenerAdapter {
                 event.reply("❌ Μόνο για Admins.").setEphemeral(true).queue();
                 return;
             }
-            // Εδώ το μήνυμα στέλνεται κανονικά στο κανάλι (όχι ephemeral)
-            // για να μένει "καρφωμένο" σαν το Aleeva.
+
             event.getChannel().sendMessage("Καλώς ήρθες! Παρακαλώ επίλεξε τη γλώσσα σου:")
                     .addActionRow(
                             Button.primary("lang_el", "Ελληνικά"),
@@ -41,29 +41,37 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        // Εδώ το deferReply σταματάει το "Interaction Failed"
+        // 1. deferReply(true) για να μην τρως το 3-second timeout του Discord
         event.deferReply(true).queue();
 
-        String componentId = event.getComponentId();
-        if (componentId != null && componentId.startsWith("lang_")) {
-            String lang = componentId.split("_")[1];
-            long discordId = event.getUser().getIdLong();
+        // 2. Εκτέλεση σε ξεχωριστό thread ώστε να μην μπλοκάρει το κύριο πρόγραμμα
+        CompletableFuture.runAsync(() -> {
+            try {
+                String componentId = event.getComponentId();
+                if (componentId != null && componentId.startsWith("lang_")) {
+                    String lang = componentId.split("_")[1];
+                    long discordId = event.getUser().getIdLong();
 
-            // Χρήση του getHook() για να απαντήσουμε μετά το deferReply
-            userRepository.findByDiscordId(discordId).ifPresentOrElse(
-                    user -> {
-                        user.setPreferredLanguage(lang);
-                        userRepository.save(user);
-                        event.getHook().sendMessage("✅ Η γλώσσα σου ενημερώθηκε σε: " + lang.toUpperCase()).queue();
-                    },
-                    () -> {
-                        User newUser = new User();
-                        newUser.setDiscordId(discordId);
-                        newUser.setPreferredLanguage(lang);
-                        userRepository.save(newUser);
-                        event.getHook().sendMessage("✅ Καλώς ήρθες! Η γλώσσα σου ορίστηκε σε: " + lang.toUpperCase()).queue();
-                    }
-            );
-        }
+                    userRepository.findByDiscordId(discordId).ifPresentOrElse(
+                            user -> {
+                                user.setPreferredLanguage(lang);
+                                userRepository.save(user);
+                                event.getHook().sendMessage("✅ Η γλώσσα σου ενημερώθηκε σε: " + lang.toUpperCase()).queue();
+                            },
+                            () -> {
+                                User newUser = new User();
+                                newUser.setDiscordId(discordId);
+                                newUser.setPreferredLanguage(lang);
+                                userRepository.save(newUser);
+                                event.getHook().sendMessage("✅ Καλώς ήρθες! Η γλώσσα σου ορίστηκε σε: " + lang.toUpperCase()).queue();
+                            }
+                    );
+                }
+            } catch (Exception e) {
+                // Εδώ καταγράφεται το σφάλμα στα logs του Railway αν κάτι πάει στραβά
+                e.printStackTrace();
+                event.getHook().sendMessage("❌ Σφάλμα κατά την αποθήκευση στη βάση.").queue();
+            }
+        });
     }
 }
