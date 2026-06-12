@@ -17,19 +17,11 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        // 1. Απαντάμε αμέσως στο Discord ότι επεξεργαζόμαστε το αίτημα
-        event.deferReply(true).queue();
-
-        // 2. Εκτελούμε τη λογική με τη βάση δεδομένων
         userRepository.findByDiscordId(event.getUser().getIdLong())
                 .ifPresentOrElse(user -> {
-                    // 3. Στέλνουμε το τελικό μήνυμα χρησιμοποιώντας το hook
-                    event.getHook().sendMessage(translationService.get(user.getPreferredLanguage(), "lang_changed"))
-                            .queue();
+                    event.reply(translationService.get(user.getPreferredLanguage(), "lang_changed")).setEphemeral(true).queue();
                 }, () -> {
-                    // 4. Στέλνουμε μήνυμα λάθους αν δεν βρεθεί
-                    event.getHook().sendMessage("❌ Access Denied: Not registered.")
-                            .queue();
+                    event.reply("❌ Access Denied: Not registered.").setEphemeral(true).queue();
                 });
     }
 }
