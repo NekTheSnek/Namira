@@ -23,15 +23,26 @@ public class NamiraApplication {
     @Bean
     public CommandLineRunner initDiscordBot(DiscordListener listener) {
         return args -> {
-            JDABuilder.createDefault(botToken)
-                    .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
-                    .addEventListeners(listener)
-                    .build()
-                    .updateCommands()
-                    .addCommands(
-                            Commands.slash("setup_welcome", "Spawn welcome message")
-                    )
-                    .queue();
+            try {
+                var jda = JDABuilder.createDefault(botToken)
+                        .enableIntents(
+                                GatewayIntent.GUILD_MESSAGES,
+                                GatewayIntent.MESSAGE_CONTENT,
+                                GatewayIntent.GUILD_MEMBERS // Πρέπει να το προσθέσεις για να "βλέπει" μέλη
+                        )
+                        .addEventListeners(listener)
+                        .build();
+
+                // Εδώ δηλώνουμε τα commands μας σε ξεχωριστό block
+                jda.updateCommands().addCommands(
+                        Commands.slash("setup_welcome", "Setup the welcome panel"),
+                        Commands.slash("profile", "Check your Namira profile")
+                ).queue();
+
+                System.out.println("Namira Bot is online and ready!");
+            } catch (Exception e) {
+                System.err.println("Failed to start Namira Bot: " + e.getMessage());
+            }
         };
     }
 }
