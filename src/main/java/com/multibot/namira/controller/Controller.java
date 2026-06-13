@@ -3,6 +3,8 @@ package com.multibot.namira.controller;
 import com.multibot.namira.model.User;
 import com.multibot.namira.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -65,5 +67,16 @@ public class Controller {
         newUser.setPassword(passwordEncoder.encode(password));
         userRepository.save(newUser);
         return "Registration successful! <a href='/'>Go to Login</a>";
+    }
+
+    @GetMapping("/dashboard")
+    public String dashboard(Authentication auth) {
+        String email = (auth.getPrincipal() instanceof OAuth2User)
+                ? ((OAuth2User) auth.getPrincipal()).getAttribute("email")
+                : auth.getName();
+
+        return userRepository.findByEmail(email)
+                .map(user -> getStyles() + "<div class='container'><h2>Welcome, " + user.getUsername() + "</h2></div>")
+                .orElse("User not found.");
     }
 }
