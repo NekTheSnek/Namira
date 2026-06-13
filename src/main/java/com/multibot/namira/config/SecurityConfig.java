@@ -16,17 +16,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Επιτρέπουμε την πρόσβαση στη home και στα assets
-                        .requestMatchers("/", "/css/**", "/images/**").permitAll()
-                        // Οποιοδήποτε άλλο URL (όπως το /secureaccess) απαιτεί login
-                        .anyRequest().authenticated()
+                        .requestMatchers("/", "/css/**").permitAll() // Αφήνουμε τη Home ελεύθερη
+                        .anyRequest().authenticated()               // Όλα τα άλλα θέλουν login
                 )
+                // Εδώ λέμε στο Spring: "Μην δείχνεις τη δική σου σελίδα login"
+                // Χρησιμοποίησε το oauth2Login() μόνο για το redirect στη Google
                 .oauth2Login(oauth -> oauth
-                        .defaultSuccessUrl("/secureaccess", true) // Μετά το login, στείλτον στο /secureaccess
-                )
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/") // Μετά το logout, στείλτον στη home
-                        .permitAll()
+                        .defaultSuccessUrl("/secureaccess", true)
                 );
 
         return http.build();
