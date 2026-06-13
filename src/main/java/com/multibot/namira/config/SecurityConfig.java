@@ -14,13 +14,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Απαραίτητο για να δουλέψουν οι POST φόρμες χωρίς token
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/signup", "/register", "/css/**").permitAll() // Ανοίξαμε το /register
+                        // Επιτρέπουμε την πρόσβαση στη home και στα assets
+                        .requestMatchers("/", "/css/**", "/images/**").permitAll()
+                        // Οποιοδήποτε άλλο URL (όπως το /secureaccess) απαιτεί login
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.loginPage("/").permitAll())
-                .oauth2Login(oauth -> oauth.loginPage("/"));
+                .oauth2Login(oauth -> oauth
+                        .defaultSuccessUrl("/secureaccess", true) // Μετά το login, στείλτον στο /secureaccess
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/") // Μετά το logout, στείλτον στη home
+                        .permitAll()
+                );
 
         return http.build();
     }
