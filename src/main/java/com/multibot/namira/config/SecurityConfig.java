@@ -1,4 +1,4 @@
-package com.multibot.namira.config; // Βεβαιώσου ότι είναι στο σωστό package
+package com.multibot.namira.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,25 +14,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // Απαραίτητο για να δουλέψουν οι POST φόρμες χωρίς token
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/signup", "/register", "/css/**", "/error").permitAll()
+                        .requestMatchers("/", "/login", "/signup", "/register", "/css/**").permitAll() // Ανοίξαμε το /register
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginPage("/") // Η αρχική σελίδα είναι το Login form
-                        .loginProcessingUrl("/login") // Το URL που στέλνει η φόρμα
-                        .defaultSuccessUrl("/dashboard", true) // Πού πάει μετά το επιτυχές login
-                        .permitAll()
-                )
-                .oauth2Login(oauth -> oauth
-                        .loginPage("/")
-                        .defaultSuccessUrl("/dashboard", true)
-                )
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/")
-                        .permitAll()
-                );
+                .formLogin(form -> form.loginPage("/").permitAll())
+                .oauth2Login(oauth -> oauth.loginPage("/"));
 
         return http.build();
     }

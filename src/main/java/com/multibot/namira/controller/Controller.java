@@ -2,9 +2,7 @@ package com.multibot.namira.controller;
 
 import com.multibot.namira.model.User;
 import com.multibot.namira.repository.UserRepository;
-import com.multibot.namira.service.TranslationService; // Εισαγωγή του Service
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,13 +15,10 @@ public class Controller {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
-    private TranslationService translationService; // Η "γέφυρα" για τις γλώσσες του Bot
-
     private String getStyles() {
         return "<style>" +
-                "body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }" +
-                ".container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; width: 350px; }" +
+                "body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }" +
+                ".container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }" +
                 "input { width: 90%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }" +
                 "button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 4px; border: none; cursor: pointer; }" +
                 ".btn-blue { background: #007bff; color: white; }" +
@@ -68,22 +63,7 @@ public class Controller {
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
-        newUser.setPreferredLanguage("en"); // Default γλώσσα
         userRepository.save(newUser);
         return "Registration successful! <a href='/'>Go to Login</a>";
-    }
-
-    // --- ΝΕΟ ENDPOINT ΓΙΑ ΤΟ DASHBOARD (Η γέφυρα με το Bot) ---
-    @GetMapping("/dashboard")
-    public String dashboard(Authentication auth) {
-        String email = auth.getName();
-        return userRepository.findByEmail(email).map(user ->
-                getStyles() + "<div class='container'>" +
-                        "<h2>Welcome, " + user.getUsername() + "</h2>" +
-                        "<p>Your Discord ID: <b>" + (user.getDiscordId() != null ? user.getDiscordId() : "Not linked") + "</b></p>" +
-                        "<p>Your Language: <b>" + user.getPreferredLanguage().toUpperCase() + "</b></p>" +
-                        "<hr><a href='/logout'>Logout</a>" +
-                        "</div>"
-        ).orElse("User not found.");
     }
 }
