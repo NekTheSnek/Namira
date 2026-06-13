@@ -14,16 +14,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // Απαραίτητο για να δουλέψουν οι POST φόρμες χωρίς token
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/css/**").permitAll() // Αφήνουμε τη Home ελεύθερη
-                        .anyRequest().authenticated()               // Όλα τα άλλα θέλουν login
+                        .requestMatchers("/", "/login", "/signup", "/register", "/css/**").permitAll() // Ανοίξαμε το /register
+                        .anyRequest().authenticated()
                 )
-                // Εδώ λέμε στο Spring: "Μην δείχνεις τη δική σου σελίδα login"
-                // Χρησιμοποίησε το oauth2Login() μόνο για το redirect στη Google
-                .oauth2Login(oauth -> oauth
-                        .defaultSuccessUrl("/secureaccess", true)
-                );
+                .formLogin(form -> form.loginPage("/").permitAll())
+                .oauth2Login(oauth -> oauth.loginPage("/"));
 
         return http.build();
     }
