@@ -11,12 +11,11 @@ public class User {
     private Long id;
 
     private String username;
-    private String password;
+    private String password; // Απαραίτητο για το Login
     private String email;
-    private String role = "USER";
+    private String role = "USER"; // Για να ξεχωρίζεις τον Admin
 
-    // Εδώ προσθέσαμε το columnDefinition για να το "δει" σωστά η PostgreSQL
-    @Column(name = "discord_id", unique = true, columnDefinition = "BIGINT")
+    @Column(unique = true)
     private Long discordId;
 
     private String preferredLanguage = "en";
