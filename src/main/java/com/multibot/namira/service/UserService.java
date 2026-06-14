@@ -14,17 +14,20 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    // Αυτή η μέθοδος κάνει "Setup" τον χρήστη με όλα τα απαραίτητα δεδομένα
     @Transactional
-    public void updateUserLanguage(long discordId, String lang) {
+    public void setLanguageAndTimezone(long discordId, String lang) {
         userRepository.findByDiscordId(discordId).ifPresentOrElse(
                 user -> {
                     user.setPreferredLanguage(lang);
+                    user.setTimezone("UTC");
                     userRepository.save(user);
                 },
                 () -> {
                     User newUser = new User();
                     newUser.setDiscordId(discordId);
                     newUser.setPreferredLanguage(lang);
+                    newUser.setTimezone("UTC");
                     userRepository.save(newUser);
                 }
         );

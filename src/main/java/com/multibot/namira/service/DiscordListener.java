@@ -13,11 +13,12 @@ public class DiscordListener extends ListenerAdapter {
 
     private final UserService userService;
     private final TranslationService translationService;
+    private final TimeService timeService;
 
-    // Ο Listener πλέον εξαρτάται ΜΟΝΟ από το Service, όχι από το Repository
-    public DiscordListener(UserService userService, TranslationService translationService) {
+    public DiscordListener(UserService userService, TranslationService translationService, TimeService timeService) {
         this.userService = userService;
         this.translationService = translationService;
+        this.timeService = timeService;
     }
 
     @Override
@@ -49,14 +50,14 @@ public class DiscordListener extends ListenerAdapter {
                     String lang = componentId.split("_")[1];
                     long discordId = event.getUser().getIdLong();
 
-                    // Καθαρή κλήση του Service - ο Listener δεν "βλέπει" τη βάση πλέον
-                    userService.updateUserLanguage(discordId, lang);
+                    // Χρησιμοποιούμε τη νέα μέθοδο που σώζει και τα δύο
+                    userService.setLanguageAndTimezone(discordId, lang);
 
-                    event.getHook().sendMessage("✅ Η γλώσσα σου ενημερώθηκε σε: " + lang.toUpperCase()).queue();
+                    event.getHook().sendMessage("✅ Επιτυχία! Γλώσσα: " + lang.toUpperCase() + " | Timezone: UTC").queue();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                event.getHook().sendMessage("❌ Σφάλμα κατά την ενημέρωση.").queue();
+                event.getHook().sendMessage("❌ Σφάλμα κατά την αποθήκευση.").queue();
             }
         });
     }
