@@ -20,18 +20,23 @@ public class NamiraApplication {
         SpringApplication.run(NamiraApplication.class, args);
     }
 
+    // Αντικατάστησε το υπάρχον initDiscordBot με αυτό:
     @Bean
     public CommandLineRunner initDiscordBot(DiscordListener listener) {
         return args -> {
-            JDABuilder.createDefault(botToken)
-                    .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
-                    .addEventListeners(listener)
-                    .build()
-                    .updateCommands()
-                    .addCommands(
-                            Commands.slash("setup_welcome", "Spawn welcome message")
+            net.dv8tion.jda.api.JDA jda = net.dv8tion.jda.api.JDABuilder.createDefault(botToken)
+                    .enableIntents(
+                            net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGES,
+                            net.dv8tion.jda.api.requests.GatewayIntent.MESSAGE_CONTENT,
+                            net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MEMBERS
                     )
-                    .queue();
+                    .addEventListeners(listener)
+                    .build();
+
+            jda.awaitReady(); // ΠΕΡΙΜΕΝΕΙ να συνδεθεί ΠΡΙΝ κάνει οτιδήποτε άλλο
+            jda.updateCommands().addCommands(
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("setup_welcome", "Spawn welcome message")
+            ).queue();
         };
     }
 }
