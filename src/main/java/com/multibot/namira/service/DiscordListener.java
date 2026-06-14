@@ -1,7 +1,5 @@
 package com.multibot.namira.service;
 
-import com.multibot.namira.repository.UserRepository;
-import com.multibot.namira.model.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -13,11 +11,12 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class DiscordListener extends ListenerAdapter {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final TranslationService translationService;
 
-    public DiscordListener(UserRepository userRepository, TranslationService translationService) {
-        this.userRepository = userRepository;
+    // Ο Listener πλέον εξαρτάται ΜΟΝΟ από το Service, όχι από το Repository
+    public DiscordListener(UserService userService, TranslationService translationService) {
+        this.userService = userService;
         this.translationService = translationService;
     }
 
@@ -41,10 +40,8 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        // 1. deferReply(true) για να μην τρως το 3-second timeout του Discord
         event.deferReply(true).queue();
 
-        // 2. Εκτέλεση σε ξεχωριστό thread ώστε να μην μπλοκάρει το κύριο πρόγραμμα
         CompletableFuture.runAsync(() -> {
             try {
                 String componentId = event.getComponentId();
@@ -52,25 +49,14 @@ public class DiscordListener extends ListenerAdapter {
                     String lang = componentId.split("_")[1];
                     long discordId = event.getUser().getIdLong();
 
-                    userRepository.findByDiscordId(discordId).ifPresentOrElse(
-                            user -> {
-                                user.setPreferredLanguage(lang);
-                                userRepository.save(user);
-                                event.getHook().sendMessage("✅ Η γλώσσα σου ενημερώθηκε σε: " + lang.toUpperCase()).queue();
-                            },
-                            () -> {
-                                User newUser = new User();
-                                newUser.setDiscordId(discordId);
-                                newUser.setPreferredLanguage(lang);
-                                userRepository.save(newUser);
-                                event.getHook().sendMessage("✅ Καλώς ήρθες! Η γλώσσα σου ορίστηκε σε: " + lang.toUpperCase()).queue();
-                            }
-                    );
+                    // Καθαρή κλήση του Service - ο Listener δεν "βλέπει" τη βάση πλέον
+                    userService.updateUserLanguage(discordId, lang);
+
+                    event.getHook().sendMessage("✅ Η γλώσσα σου ενημερώθηκε σε: " + lang.toUpperCase()).queue();
                 }
             } catch (Exception e) {
-                // Εδώ καταγράφεται το σφάλμα στα logs του Railway αν κάτι πάει στραβά
                 e.printStackTrace();
-                event.getHook().sendMessage("❌ Σφάλμα κατά την αποθήκευση στη βάση.").queue();
+                event.getHook().sendMessage("❌ Σφάλμα κατά την ενημέρωση.").queue();
             }
         });
     }
