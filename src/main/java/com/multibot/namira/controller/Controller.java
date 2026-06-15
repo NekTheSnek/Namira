@@ -3,6 +3,8 @@ package com.multibot.namira.controller;
 import com.multibot.namira.model.User;
 import com.multibot.namira.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,9 +69,24 @@ public class Controller {
         return "Registration successful! <a href='/'>Go to Login</a>";
     }
 
-    // Πρόσθεσε αυτό για να μην βγάζει 404 μετά το login
     @GetMapping("/secureaccess")
-    public String secureAccess() {
-        return "<h1>Success!</h1><p>Welcome to the secure area.</p><a href='/logout'>Logout</a>";
+    public String secureaccess(@AuthenticationPrincipal Object principal) {
+        String name = "User";
+
+        // Αν είναι OAuth2 login (Google)
+        if (principal instanceof OAuth2User) {
+            name = ((OAuth2User) principal).getAttribute("name");
+        }
+        // Αν είναι κλασικό login
+        else if (principal != null) {
+            name = principal.toString();
+        }
+
+        return getStyles() +
+                "<div class='container'>" +
+                "<h2>Success!</h2>" +
+                "<p>Welcome, <b>" + name + "</b>!</p>" +
+                "<a href='/logout'><button class='btn-blue'>Logout</button></a>" +
+                "</div>";
     }
 }
