@@ -49,8 +49,6 @@ public class DiscordListener extends ListenerAdapter {
                 if (componentId != null && componentId.startsWith("lang_")) {
                     String lang = componentId.split("_")[1];
                     long discordId = event.getUser().getIdLong();
-
-                    // Χρησιμοποιούμε τη νέα μέθοδο που σώζει και τα δύο
                     userService.setLanguageAndTimezone(discordId, lang);
 
                     event.getHook().sendMessage("✅ Επιτυχία! Γλώσσα: " + lang.toUpperCase() + " | Timezone: UTC").queue();

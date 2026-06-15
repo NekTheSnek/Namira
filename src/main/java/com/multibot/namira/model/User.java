@@ -14,8 +14,6 @@ public class User {
     private String password;
     private String email;
     private String role = "USER";
-
-    // Εδώ προσθέσαμε το columnDefinition για να το "δει" σωστά η PostgreSQL
     @Column(name = "discord_id", unique = true, columnDefinition = "BIGINT")
     private Long discordId;
 
@@ -33,8 +31,6 @@ public class User {
         this.timezone = "UTC";
         this.role = "USER";
     }
-
-    // --- Getters & Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

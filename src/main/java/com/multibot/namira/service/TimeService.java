@@ -13,8 +13,6 @@ public class TimeService {
         String timezoneId = (user.getTimezone() != null) ? user.getTimezone() : "UTC";
         ZoneId zoneId = ZoneId.of(timezoneId);
         ZonedDateTime userDateTime = ZonedDateTime.now(zoneId);
-
-        // Εμφανίζει Ώρα:Λεπτά και (Ημέρα-Μήνας-Έτος)
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm (dd-MM-yyyy)");
         return userDateTime.format(formatter);
     }

@@ -14,9 +14,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Απαραίτητο για να δουλέψουν οι POST φόρμες χωρίς token
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/signup", "/register", "/css/**").permitAll() // Ανοίξαμε το /register
+                        .requestMatchers("/", "/login", "/signup", "/register", "/css/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.loginPage("/").permitAll())
