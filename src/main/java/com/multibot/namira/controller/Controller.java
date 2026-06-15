@@ -41,7 +41,18 @@ public class Controller {
                 "<a href='/oauth2/authorization/google'><button class='btn-google'>Sign In with Google</button></a>" +
                 "</div>";
     }
-
+    @GetMapping("/login")
+    public String loginPage() {
+        return getStyles() +
+                "<div class='container'>" +
+                "<h2>Login</h2>" +
+                "<form action='/login' method='post'>" + // Το Spring Security διαχειρίζεται το POST εδώ
+                "  <input type='text' name='username' placeholder='Username'><br>" +
+                "  <input type='password' name='password' placeholder='Password'><br>" +
+                "  <button class='btn-blue'>Sign In</button>" +
+                "</form>" +
+                "</div>";
+    }
     @GetMapping("/signup")
     public String signup() {
         return getStyles() +
