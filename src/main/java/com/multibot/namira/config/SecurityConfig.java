@@ -16,10 +16,15 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/signup", "/register", "/css/**").permitAll()
+                        .requestMatchers("/", "/signup", "/register", "/css/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.loginPage("/").permitAll())
+                .formLogin(form -> form
+                        .loginPage("/")           // Το form είναι στο "/"
+                        .loginProcessingUrl("/login") // Το POST πηγαίνει εδώ
+                        .defaultSuccessUrl("/secureaccess", true)
+                        .permitAll()
+                )
                 .oauth2Login(oauth -> oauth.loginPage("/"));
 
         return http.build();
